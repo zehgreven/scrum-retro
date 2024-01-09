@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { CardProps } from "../interfaces/card";
 
 const Card: React.FC<
   CardProps & {
