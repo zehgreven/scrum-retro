@@ -94,12 +94,7 @@ const Home: React.FC = () => {
   return (
     <main className="flex min-h-screen flex-col items-center">
       <div className="w-full p-5">
-        <div
-          className="max-w-7xl mx-auto bg-cover bg-center shadow-2xl rounded-lg"
-          style={{
-            backgroundImage: `url('/image/sprint-retrospective-image.jpg')`,
-          }}
-        >
+        <div className="max-w-7xl mx-auto bg-cover bg-center shadow-2xl rounded-lg">
           <div className="bg-gray-800 p-5 rounded-lg">
             <h1 className="text-center text-6xl font-bold text-gray-100 uppercase tracking-widest">
               Sprint Retrospective
