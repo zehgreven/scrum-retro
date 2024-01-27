@@ -1,5 +1,3 @@
-"use client";
-
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { io, Socket } from "socket.io-client";
@@ -36,7 +34,7 @@ const initial_state = [
   },
 ];
 
-const Home: React.FC = () => {
+const App: React.FC = () => {
   const [sprintName, setSprintName] = useState("Sprint Name");
   const [sprintGoals, setSprintGoals] = useState<Goal[]>([]);
   const [cardColumns, setCardColumns] =
@@ -75,12 +73,13 @@ const Home: React.FC = () => {
       text: "New Goal",
       progress: 0,
     };
+
+    onSprintGoalsAdded(newGoal);
     socket?.emit("sprintGoalsAdded", newGoal);
   };
 
   const sprintNameTextChanged = (text: string) => {
-    setSprintName(text);
-
+    onSprintNameTextChanged(text);
     socket?.emit("sprintNameTextChanged", text);
   };
 
@@ -93,6 +92,7 @@ const Home: React.FC = () => {
   };
 
   const removeSprintGoal = (goalId: string) => {
+    onSprintGoalsRemoved(goalId);
     socket?.emit("sprintGoalsRemoved", goalId);
   };
 
@@ -125,10 +125,12 @@ const Home: React.FC = () => {
   };
 
   const cleanAll = () => {
+    onCleanAll();
     socket?.emit("cleanAllClicked");
   };
 
   const onCardChanged = (id: string, cards: CardProps[]): void => {
+    setCards(id, cards);
     socket?.emit("cardChanged", id, cards);
   };
 
@@ -237,4 +239,4 @@ const Home: React.FC = () => {
   );
 };
 
-export default Home;
+export default App;
