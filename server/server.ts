@@ -1,4 +1,4 @@
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import { createServer } from "http";
 
 const httpServer = createServer();
@@ -8,14 +8,11 @@ const io = new Server(httpServer, {
   },
 });
 
-io.on("connection", (socket) => {
+io.on("connection", (socket: Socket) => {
   console.log("User connected");
 
   socket.onAny((event, ...args) => {
-    console.log("event >> ", event);
-    console.log("args >> ", ...args);
-
-    socket.emit(event, ...args);
+    // socket.emit(event, ...args);
     socket.broadcast.emit(event, ...args);
   });
 
