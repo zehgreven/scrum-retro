@@ -1,7 +1,9 @@
 import { Server, Socket } from "socket.io";
 import { createServer } from "http";
+import express from "express";
 
-const httpServer = createServer();
+const app = express();
+const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: "*",
@@ -9,7 +11,7 @@ const io = new Server(httpServer, {
 });
 
 io.on("connection", (socket: Socket) => {
-  console.log("User connected");
+  console.log(`User connected: ${socket.id}`);
 
   socket.onAny((event, ...args) => {
     // socket.emit(event, ...args);
