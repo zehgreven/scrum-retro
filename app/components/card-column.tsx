@@ -1,33 +1,56 @@
 import React, { useEffect } from "react";
-import Card from "./card";
 import { v4 as uuidv4 } from "uuid";
-import { CardColumnProps } from "../interfaces/card-column";
 import { CardProps } from "../interfaces/card";
+import { CardColumnProps } from "../interfaces/card-column";
+import Card from "./card";
 
 const CardColumn: React.FC<any> = (
   props: CardColumnProps & {
-    setCards: (cards: CardProps[]) => CardProps[];
+    setCards: (id: string, cards: CardProps[]) => CardProps[];
+    onCardChanged: (id: string, cards: CardProps[]) => CardProps[];
   }
 ): JSX.Element => {
-  const { title, color, cards, setCards } = props;
+  const { title, color, cards, setCards, onCardChanged } = props;
 
   // TODO : Remove the logs
-  useEffect(() => console.log("cards", cards), [cards]);
+  // useEffect(() => console.log("cards", cards), [cards]);
 
   const addNewCard = (text: string) => {
-    setCards([...cards, { id: uuidv4(), text }]);
+    setCards(props.id, [...cards, { id: uuidv4(), text }]);
   };
 
   const onRemove = (id: string) => {
-    setCards(cards.filter((card, _) => card.id !== id));
+    setCards(
+      props.id,
+      cards.filter((card, _) => card.id !== id)
+    );
   };
 
   const onChange = (id: string, text: string) => {
-    setCards(cards.map((card, _) => (card.id === id ? { id, text } : card)));
+    console.log("text", text);
+
+    setCards(
+      props.id,
+      cards.map((card, _) => (card.id === id ? { id, text } : card))
+    );
+  };
+
+  const onFinish = (id: string, text: string) => {
+    if (text === "") {
+      onCardChanged(
+        props.id,
+        cards.filter((card, _) => card.id !== id)
+      );
+    } else {
+      onCardChanged(
+        props.id,
+        cards.map((card, _) => (card.id === id ? { id, text } : card))
+      );
+    }
   };
 
   return (
-    <div className="flex flex-col w-1/4 mr-2">
+    <div className="flex flex-col w-1/4 mr-2 min-w-80">
       <div
         className={`bg-${color}-300 w-full h-24 mt-2 flex items-center justify-between text-base font-bold rounded-lg shadow-lg`}
       >
@@ -62,6 +85,7 @@ const CardColumn: React.FC<any> = (
           color={color}
           onRemove={onRemove}
           onChange={onChange}
+          onFinish={onFinish}
         />
       ))}
     </div>

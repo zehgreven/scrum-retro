@@ -2,33 +2,34 @@
 
 import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
+import { io, Socket } from "socket.io-client";
 
 import CardColumn from "./components/card-column";
-import { Goal } from "./interfaces/goal";
-import { CardColumnProps } from "./interfaces/card-column";
 import { CardProps } from "./interfaces/card";
+import { CardColumnProps } from "./interfaces/card-column";
+import { Goal } from "./interfaces/goal";
 
 const initial_state = [
   {
-    key: "kudos",
+    id: "kudos",
     title: "KUDOS",
     color: "gray",
     cards: [],
   },
   {
-    key: "good",
+    id: "good",
     title: "GOOD",
     color: "green",
     cards: [],
   },
   {
-    key: "not-so-good",
+    id: "not-so-good",
     title: "NOT SO GOOD",
     color: "red",
     cards: [],
   },
   {
-    key: "ideas",
+    id: "ideas",
     title: "IDEAS",
     color: "blue",
     cards: [],
@@ -40,9 +41,33 @@ const Home: React.FC = () => {
   const [sprintGoals, setSprintGoals] = useState<Goal[]>([]);
   const [cardColumns, setCardColumns] =
     useState<CardColumnProps[]>(initial_state);
+  const [socket, setSocket] = useState<Socket | null>(null);
+
+  useEffect(() => {
+    const newSocket = io("http://localhost:3001");
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    socket?.on("sprintGoalsAdded", onSprintGoalsAdded);
+    socket?.on("sprintGoalsRemoved", onSprintGoalsRemoved);
+    socket?.on("sprintGoalsProgressChanged", onSprintGoalsProgressChanged);
+    socket?.on("sprintGoalsTextChanged", onSprintGoalsTextChanged);
+    socket?.on("sprintNameTextChanged", onSprintNameTextChanged);
+    socket?.on("cleanAllClicked", onCleanAll);
+    socket?.on("cardChanged", setCards);
+  }, [socket]);
 
   // TODO : Remove the logs
-  useEffect(() => console.log("cardColumns", cardColumns), [cardColumns]);
+  // useEffect(() => console.log("cardColumns", cardColumns), [cardColumns]);
+
+  const onSprintGoalsAdded = (newGoal: Goal) => {
+    setSprintGoals((goals) => [...goals, newGoal]);
+  };
 
   const addSprintGoal = () => {
     const newGoal = {
@@ -50,37 +75,69 @@ const Home: React.FC = () => {
       text: "New Goal",
       progress: 0,
     };
-    setSprintGoals([...sprintGoals, newGoal]);
+    socket?.emit("sprintGoalsAdded", newGoal);
+  };
+
+  const sprintNameTextChanged = (text: string) => {
+    setSprintName(text);
+
+    socket?.emit("sprintNameTextChanged", text);
+  };
+
+  const onSprintNameTextChanged = (text: string) => {
+    setSprintName(text);
+  };
+
+  const onSprintGoalsRemoved = (goalId: string) => {
+    setSprintGoals((goals) => goals.filter((goal) => goal.id !== goalId));
   };
 
   const removeSprintGoal = (goalId: string) => {
-    setSprintGoals(sprintGoals.filter((goal) => goal.id !== goalId));
+    socket?.emit("sprintGoalsRemoved", goalId);
+  };
+
+  const onSprintGoalsProgressChanged = (goalId: string, progress: number) => {
+    setSprintGoals((goals) =>
+      goals.map((goal) => (goal.id === goalId ? { ...goal, progress } : goal))
+    );
   };
 
   const updateSprintGoalProgress = (goalId: string, progress: number) => {
-    setSprintGoals(
-      sprintGoals.map((goal) =>
-        goal.id === goalId ? { ...goal, progress } : goal
-      )
+    onSprintGoalsProgressChanged(goalId, progress);
+    socket?.emit("sprintGoalsProgressChanged", goalId, progress);
+  };
+
+  const onSprintGoalsTextChanged = (goalId: string, text: string) => {
+    setSprintGoals((goals) =>
+      goals.map((goal) => (goal.id === goalId ? { ...goal, text } : goal))
     );
   };
 
   const updateSprintGoalText = (goalId: string, text: string) => {
-    setSprintGoals(
-      sprintGoals.map((goal) => (goal.id === goalId ? { ...goal, text } : goal))
-    );
+    onSprintGoalsTextChanged(goalId, text);
+    socket?.emit("sprintGoalsTextChanged", goalId, text);
   };
 
-  const cleanAll = () => {
+  const onCleanAll = () => {
     setSprintName("Sprint Name");
     setSprintGoals([]);
     setCardColumns(initial_state);
   };
 
-  const setCards = (key: string, cards: CardProps[]): void => {
-    setCardColumns((prevCardColumns) => {
-      return prevCardColumns.map((column) => {
-        if (column.key === key) {
+  const cleanAll = () => {
+    socket?.emit("cleanAllClicked");
+  };
+
+  const onCardChanged = (id: string, cards: CardProps[]): void => {
+    socket?.emit("cardChanged", id, cards);
+  };
+
+  const setCards = (id: string, cards: CardProps[]): void => {
+    console.log("setCards", id, cards);
+
+    setCardColumns((columns) => {
+      return columns.map((column) => {
+        if (column.id === id) {
           return {
             ...column,
             cards,
@@ -114,7 +171,7 @@ const Home: React.FC = () => {
                 type="text"
                 className="text-start text-3xl font-semibold text-gray-900 flex-1 pt-2 pb-2"
                 value={sprintName}
-                onChange={(e) => setSprintName(e.target.value)}
+                onChange={(e) => sprintNameTextChanged(e.target.value)}
               />
               <button
                 onClick={addSprintGoal}
@@ -165,11 +222,13 @@ const Home: React.FC = () => {
         <div className="flex justify-between">
           {cardColumns.map((column) => (
             <CardColumn
-              key={column.key}
+              key={column.id}
+              id={column.id}
               title={column.title}
               color={column.color}
               cards={column.cards}
-              setCards={(cards: CardProps[]) => setCards(column.key, cards)}
+              setCards={setCards}
+              onCardChanged={onCardChanged}
             />
           ))}
         </div>

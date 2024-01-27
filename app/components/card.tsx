@@ -5,35 +5,36 @@ const Card: React.FC<
   CardProps & {
     onRemove: (index: string) => void;
     onChange: (index: string, text: string) => void;
+    onFinish: (index: string, text: string) => void;
   }
-> = ({ id, color, text, onRemove, onChange }) => {
-  const [isEditing, setIsEditing] = React.useState(true);
-  const [editableText, setEditableText] = React.useState(text);
+> = ({ id, color, text, onRemove, onChange, onFinish }) => {
+  const [isEditing, setIsEditing] = React.useState(text === "");
 
   // TODO : Remove the logs
-  useEffect(() => console.log("editableText", editableText), [editableText]);
+  // useEffect(() => console.log("text", text), [text]);
 
   const handleTextClick = () => {
     setIsEditing(true);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditableText(e.target.value);
     onChange(id, e.target.value);
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
     if (event.key === "Enter") {
-      setIsEditing(false);
-      if (editableText?.trim().length === 0) {
-        onRemove(id);
-      }
+      onStopEditing();
     }
   };
 
   const handleInputBlur = (event: React.FocusEvent<HTMLTextAreaElement>) => {
+    onStopEditing();
+  };
+
+  const onStopEditing = () => {
+    onFinish(id, text);
     setIsEditing(false);
-    if (editableText?.trim().length === 0) {
+    if (text?.trim().length === 0) {
       onRemove(id);
     }
   };
@@ -50,13 +51,13 @@ const Card: React.FC<
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onBlur={handleInputBlur}
-          value={editableText}
-          style={{ height: `${Math.round(editableText.length / 25)}em` }}
+          value={text}
+          style={{ height: `${Math.round(text.length / 25)}em` }}
           className="text-gray-800 text-justify text-sm font-semibold w-full max-h-60 min-h-20"
         />
       ) : (
         <span className="text-gray-800 text-justify text-sm font-semibold">
-          {editableText}
+          {text}
         </span>
       )}
     </div>

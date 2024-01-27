@@ -1,7 +1,7 @@
 import { CardProps } from "./card";
 
 export interface CardColumnProps {
-  key: string;
+  id: string;
   title: string;
   color: string;
   cards: CardProps[];
